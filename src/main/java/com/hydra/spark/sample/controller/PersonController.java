@@ -4,6 +4,8 @@ import com.google.inject.Inject;
 import com.hydra.spark.sample.persistence.dao.PersonDao;
 import com.hydra.spark.sample.persistence.domain.Person;
 
+import java.util.List;
+
 public class PersonController {
 
     @Inject
@@ -17,4 +19,7 @@ public class PersonController {
         return personDao.save(name, address, phone);
     }
 
+    public List<Person> findNameLike(String name){
+        return personDao.findName(name);
+    }
 }

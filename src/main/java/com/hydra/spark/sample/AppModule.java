@@ -20,6 +20,7 @@ public class AppModule implements Module {
 
     @Override
     public void configure(Binder binder) {
+        // bind your all singleton classes (DAO, services, controller, etc)
         binder.bind(PersonDao.class).asEagerSingleton();
         binder.bind(PersonController.class).asEagerSingleton();
     }

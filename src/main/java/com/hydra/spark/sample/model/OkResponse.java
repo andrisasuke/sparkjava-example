@@ -6,11 +6,19 @@ public class OkResponse {
 
     private String message;
 
+    private String data;
+
     public OkResponse(){}
 
     public OkResponse(int status, String message) {
         this.status = status;
         this.message = message;
+    }
+
+    public OkResponse(int status, String message, String data) {
+        this.status = status;
+        this.message = message;
+        this.data = data;
     }
 
     public void setStatus(int status) {
@@ -27,5 +35,13 @@ public class OkResponse {
 
     public String getMessage() {
         return message;
+    }
+
+    public String getData() {
+        return data;
+    }
+
+    public void setData(String data) {
+        this.data = data;
     }
 }
