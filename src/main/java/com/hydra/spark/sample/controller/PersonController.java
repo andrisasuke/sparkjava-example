@@ -14,8 +14,7 @@ public class PersonController {
     }
     
     public Person add(String name, String address, String phone) {
-        // TODO: 11/2/16 adding new person controller 
-        return null;
+        return personDao.save(name, address, phone);
     }
 
 }

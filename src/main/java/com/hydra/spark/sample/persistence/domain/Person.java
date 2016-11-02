@@ -17,6 +17,14 @@ public class Person extends Base {
     @Column(name = "phone", nullable = false, unique = true)
     private String phone;
 
+    public Person() {}
+
+    public Person(String name, String address, String phone) {
+        this.name = name;
+        this.address = address;
+        this.phone = phone;
+    }
+
     public String getName() {
         return name;
     }
