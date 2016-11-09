@@ -56,6 +56,8 @@ public class PersonController {
         String envVar = config.getString("os-variable");
         LOGGER.info("env variable {}", envVar);
 
+        LOGGER.info("hostname {}", config.getString("hostname"));
+
         return "OK";
     }
 }
