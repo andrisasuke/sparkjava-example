@@ -62,6 +62,10 @@ public class Main {
             }
         }, JsonUtil.json());
 
+        get("/config", (req, res) -> {
+            res.status(200);
+            return "config "+personController.config();
+        });
 
         // global exception handler
         exception(Exception.class, (e, req, res) -> {
@@ -71,13 +75,24 @@ public class Main {
             res.body(JsonUtil.toJson(new ErrorResponse(500, "Internal Server Error")));
         });
 
+
+        // global exception handler
+        exception(NullPointerException.class, (e, req, res) -> {
+            LOGGER.error(String.format("%s : Got an exception for request : %s  ", e.getLocalizedMessage(), req.url()));
+            LOGGER.error(e.getLocalizedMessage(), e);
+            res.status(500);
+            res.body(JsonUtil.toJson(new ErrorResponse(500, "Internal Server Error")));
+        });
+
+
+
         // apply cors filter
         Filter corsFilter = (request, response) -> {
             Map<String, String> corsHeaders = Collections.unmodifiableMap(new HashMap<String, String>() {
                 {
                     put("Access-Control-Allow-Methods", "GET,PUT,POST,DELETE,OPTIONS");
                     put("Access-Control-Allow-Origin", "*");
-                    put("Access-Control-Allow-Headers", "Content-Type");
+                    put("Access-Control-Allow-Headers", "Content-Type, Client-ID");
                     put("Access-Control-Max-Age", "1800");//30 min
                 }
             });

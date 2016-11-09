@@ -19,9 +19,6 @@ public class PersonDao {
     @Inject
     EntityManager entityManager;
 
-    @Inject
-    EntityTransaction entityTransaction;
-
     public Person find(Integer id) {
 
         final EntityManager em = entityManager;
@@ -35,7 +32,7 @@ public class PersonDao {
 
     public Person save(String name, String address, String phone) {
         final EntityManager em = entityManager;
-        final EntityTransaction trx = entityTransaction;
+        final EntityTransaction trx = em.getTransaction();
 
         Person person = new Person(name, address, phone);
 

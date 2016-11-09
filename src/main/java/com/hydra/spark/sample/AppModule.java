@@ -6,12 +6,13 @@ import com.google.inject.Provides;
 import com.google.inject.Singleton;
 import com.hydra.spark.sample.controller.PersonController;
 import com.hydra.spark.sample.persistence.dao.PersonDao;
+import com.typesafe.config.Config;
+import com.typesafe.config.ConfigFactory;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import javax.persistence.EntityManager;
 import javax.persistence.EntityManagerFactory;
-import javax.persistence.EntityTransaction;
 import javax.persistence.Persistence;
 
 public class AppModule implements Module {
@@ -36,9 +37,9 @@ public class AppModule implements Module {
 
     @Singleton
     @Provides
-    public EntityTransaction providesEntityTransaction(EntityManager entityManager){
-        LOGGER.info("Initialize transactional factory");
-        return entityManager.getTransaction();
+    public Config providesConfigFactory(){
+        Config config = ConfigFactory.load("application");
+        return config;
     }
 
 }
