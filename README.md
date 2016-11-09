@@ -9,8 +9,9 @@ Sparkjava Example - sample CRUD application
 
 1. Guice dependency injection
 2. Connect to MySQL database
-2. Hibernate persistence (with connection pool)
-3. to be continue..
+3. Hibernate persistence (with connection pool)
+4. Properties configuration file using `https://github.com/typesafehub/config`
+5. to be continue..
 
 ## How to run :
 
