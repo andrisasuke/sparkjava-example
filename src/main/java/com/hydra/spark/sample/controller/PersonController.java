@@ -3,10 +3,15 @@ package com.hydra.spark.sample.controller;
 import com.google.inject.Inject;
 import com.hydra.spark.sample.persistence.dao.PersonDao;
 import com.hydra.spark.sample.persistence.domain.Person;
+import com.hydra.spark.sample.service.ElasticsearchService;
+import com.hydra.spark.sample.util.ESValue;
 import com.typesafe.config.Config;
+import org.elasticsearch.common.xcontent.XContentBuilder;
+import org.elasticsearch.common.xcontent.XContentFactory;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.io.IOException;
 import java.util.List;
 
 public class PersonController {
@@ -19,15 +24,35 @@ public class PersonController {
     @Inject
     Config config;
 
+    @Inject
+    ElasticsearchService elasticsearchService;
+
     public Person getById(Integer id){
         return personDao.find(id);
     }
     
     public Person add(String name, String address, String phone) {
-        return personDao.save(name, address, phone);
+        Person result = personDao.save(name, address, phone);
+        if(result != null){
+
+            XContentBuilder builder = null;
+            try {
+                builder = XContentFactory.jsonBuilder()
+                        .startObject()
+                        .field("name", name)
+                        .field("address", address)
+                        .field("phone", phone)
+                        .endObject();
+                elasticsearchService.addIndex(ESValue.PERSON_INDEX, ESValue.POFILE_DOCTYPE, result.getId(), builder);
+            } catch (IOException e) {
+                LOGGER.error("Failed to build XContentBuilder for person, {}", e.getMessage());
+            }
+        }
+        return result;
     }
 
     public List<Person> findNameLike(String name){
+        elasticsearchService.findNameLike("title", name, "andri", "news");
         return personDao.findName(name);
     }
 
@@ -51,12 +76,6 @@ public class PersonController {
         LOGGER.info("int json {}", jsonInt1);
         LOGGER.info("int bar {}", jsonInt2);
         LOGGER.info("int baz {}", jsonInt3);
-
-        // environment variable
-        String envVar = config.getString("os-variable");
-        LOGGER.info("env variable {}", envVar);
-
-        LOGGER.info("hostname {}", config.getString("hostname"));
 
         return "OK";
     }

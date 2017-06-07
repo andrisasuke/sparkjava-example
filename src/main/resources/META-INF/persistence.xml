@@ -9,17 +9,26 @@
         <exclude-unlisted-classes>true</exclude-unlisted-classes>
 
         <properties>
+            <property name="hibernate.dialect" value="org.hibernate.dialect.PostgreSQL9Dialect" />
+            <!--
             <property name="hibernate.dialect" value="org.hibernate.dialect.MySQL5InnoDBDialect"/>
+            -->
             <!-- value="create" to build a new database on each run; value="update" to modify an existing database; value="create-drop" means the same as "create" but also drops tables when Hibernate closes; value="validate" makes no changes to the database -->
             <property name="hibernate.hbm2ddl.auto" value="none"/>
             <property name="hibernate.connection.charSet" value="UTF-8"/>
             <property name="hibernate.show_sql" value="true" />
-            
+
+            <!--
             <property name="hibernate.connection.driver_class" value="com.mysql.jdbc.Driver" />
             <property name="hibernate.connection.username" value="root" />
             <property name="hibernate.connection.password" value="" />
             <property name="hibernate.connection.url" value="jdbc:mysql://localhost:3306/test" />
-            
+            -->
+            <property name="hibernate.connection.driver_class" value="org.postgresql.Driver" />
+            <property name="hibernate.connection.username" value="andri" />
+            <property name="hibernate.connection.password" value="anadri" />
+            <property name="hibernate.connection.url" value="jdbc:postgresql://localhost/andri" />
+
             <property name="hibernate.connection.provider_class" value="org.hibernate.connection.C3P0ConnectionProvider" />
             <property name="hibernate.c3p0.min_size" value="5" />
             <property name="hibernate.c3p0.max_size" value="10" />

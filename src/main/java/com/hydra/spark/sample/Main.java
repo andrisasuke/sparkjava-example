@@ -28,7 +28,7 @@ public class Main {
         PersonController personController = injector.getInstance(PersonController.class);
 
         // define your routes
-        get("/", (req, res) -> "Hail, Hydra!");
+        get("/", (req, res) -> "Hi there!");
 
         get("/person/:id", (req, res) -> {
             Integer id = Integer.parseInt(req.params(":id"));

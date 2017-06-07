@@ -6,14 +6,22 @@ import com.google.inject.Provides;
 import com.google.inject.Singleton;
 import com.hydra.spark.sample.controller.PersonController;
 import com.hydra.spark.sample.persistence.dao.PersonDao;
+import com.hydra.spark.sample.service.ElasticsearchService;
 import com.typesafe.config.Config;
 import com.typesafe.config.ConfigFactory;
+import org.elasticsearch.client.Client;
+import org.elasticsearch.client.transport.TransportClient;
+import org.elasticsearch.common.settings.Settings;
+import org.elasticsearch.common.transport.InetSocketTransportAddress;
+import org.elasticsearch.transport.client.PreBuiltTransportClient;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import javax.persistence.EntityManager;
 import javax.persistence.EntityManagerFactory;
 import javax.persistence.Persistence;
+import java.net.InetAddress;
+import java.net.UnknownHostException;
 
 public class AppModule implements Module {
 
@@ -24,6 +32,7 @@ public class AppModule implements Module {
         // bind your all singleton classes (DAO, services, controller, etc)
         binder.bind(PersonDao.class).asEagerSingleton();
         binder.bind(PersonController.class).asEagerSingleton();
+        binder.bind(ElasticsearchService.class).asEagerSingleton();
     }
 
     @Singleton
@@ -38,8 +47,20 @@ public class AppModule implements Module {
     @Singleton
     @Provides
     public Config providesConfigFactory(){
-        Config config = ConfigFactory.load("application");
-        return config;
+        return ConfigFactory.load("application");
+    }
+
+    @Singleton
+    @Provides
+    public Client provideElasticSearchClient(){
+        try {
+            TransportClient client = new PreBuiltTransportClient(Settings.EMPTY)
+                    .addTransportAddress(new InetSocketTransportAddress(InetAddress.getByName("localhost"), 9300));
+            return client;
+        }catch (UnknownHostException e){
+            LOGGER.error("Failed to create ES transport client, {}", e.getMessage());
+        }
+        return null;
     }
 
 }
