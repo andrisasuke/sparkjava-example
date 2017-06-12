@@ -12,7 +12,8 @@ Sparkjava Example - sample CRUD application
 3. Hibernate persistence (with connection pool)
 4. Properties configuration file using `https://github.com/typesafehub/config`
 5. Elasticsearch
-6. to be continue..
+6. Java Bean Validation (javax.validation), validate NotNull property
+7. to be continue..
 
 ## How to run :
 

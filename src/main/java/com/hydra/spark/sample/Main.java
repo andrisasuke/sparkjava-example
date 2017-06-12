@@ -7,10 +7,12 @@ import com.hydra.spark.sample.model.ErrorResponse;
 import com.hydra.spark.sample.model.OkResponse;
 import com.hydra.spark.sample.persistence.domain.Person;
 import com.hydra.spark.sample.util.JsonUtil;
+import com.typesafe.config.Config;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import spark.Filter;
 
+import javax.validation.ValidationException;
 import java.util.*;
 
 import static spark.Spark.*;
@@ -26,6 +28,9 @@ public class Main {
         // inject all controllers
         Injector injector = Guice.createInjector(new AppModule());
         PersonController personController = injector.getInstance(PersonController.class);
+        Config config = injector.getInstance(Config.class);
+
+        LOGGER.info("Sample to reading config by key {} : {}", "environment", config.getConfig("config").getString("environment"));
 
         // define your routes
         get("/", (req, res) -> "Hi there!");
@@ -46,26 +51,22 @@ public class Main {
                 return new OkResponse(200, "found "+persons.size()+" person with name :"+nameLike, json);
             } else {
                 res.status(406);
-                return new OkResponse(406, "failed new person name :"+nameLike + ", check your server logs.." );
+                return new ErrorResponse(406, "failed new person name :"+nameLike + ", check your server logs.." );
             }
         }, JsonUtil.json());
 
         put("/person/", (req, res) -> {
             Person personRequest = JsonUtil.GSON.fromJson(req.body(), Person.class);
-            Person p = personController.add(personRequest.getName(), personRequest.getAddress(), personRequest.getPhone());
-            if(p != null){
+            try {
+                Person p = personController.add(personRequest);
                 res.status(201);
-                return new OkResponse(201, "added new person name :"+p.getName());
-            } else {
-                res.status(406);
-                return new OkResponse(406, "failed new person name :"+personRequest.getName() + ", check your server logs.." );
+                return new OkResponse(201, "added new person name : "+p.getName());
+            } catch (ValidationException ve){
+                res.status(400);
+                return new ErrorResponse(400, ve.getMessage() );
             }
-        }, JsonUtil.json());
 
-        get("/config", (req, res) -> {
-            res.status(200);
-            return "config "+personController.config();
-        });
+        }, JsonUtil.json());
 
         // global exception handler
         exception(Exception.class, (e, req, res) -> {
@@ -75,24 +76,13 @@ public class Main {
             res.body(JsonUtil.toJson(new ErrorResponse(500, "Internal Server Error")));
         });
 
-
-        // global exception handler
-        exception(NullPointerException.class, (e, req, res) -> {
-            LOGGER.error(String.format("%s : Got an exception for request : %s  ", e.getLocalizedMessage(), req.url()));
-            LOGGER.error(e.getLocalizedMessage(), e);
-            res.status(500);
-            res.body(JsonUtil.toJson(new ErrorResponse(500, "Internal Server Error")));
-        });
-
-
-
         // apply cors filter
         Filter corsFilter = (request, response) -> {
             Map<String, String> corsHeaders = Collections.unmodifiableMap(new HashMap<String, String>() {
                 {
                     put("Access-Control-Allow-Methods", "GET,PUT,POST,DELETE,OPTIONS");
                     put("Access-Control-Allow-Origin", "*");
-                    put("Access-Control-Allow-Headers", "Content-Type, Client-ID");
+                    put("Access-Control-Allow-Headers", "Content-Type");
                     put("Access-Control-Max-Age", "1800");//30 min
                 }
             });

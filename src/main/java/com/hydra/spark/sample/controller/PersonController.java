@@ -10,9 +10,14 @@ import org.elasticsearch.common.xcontent.XContentBuilder;
 import org.elasticsearch.common.xcontent.XContentFactory;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import spark.utils.StringUtils;
 
+import javax.validation.ConstraintViolation;
+import javax.validation.ValidationException;
+import javax.validation.Validator;
 import java.io.IOException;
 import java.util.List;
+import java.util.Set;
 
 public class PersonController {
 
@@ -27,21 +32,25 @@ public class PersonController {
     @Inject
     ElasticsearchService elasticsearchService;
 
+    @Inject
+    Validator validator;
+
     public Person getById(Integer id){
         return personDao.find(id);
     }
     
-    public Person add(String name, String address, String phone) {
-        Person result = personDao.save(name, address, phone);
+    public Person add(Person person) {
+        validatePerson(person);
+        Person result = personDao.save(person.getName(), person.getAddress(), person.getPhone());
         if(result != null){
 
             XContentBuilder builder = null;
             try {
                 builder = XContentFactory.jsonBuilder()
                         .startObject()
-                        .field("name", name)
-                        .field("address", address)
-                        .field("phone", phone)
+                        .field("name", person.getName())
+                        .field("address", person.getAddress())
+                        .field("phone", person.getPhone())
                         .endObject();
                 elasticsearchService.addIndex(ESValue.PERSON_INDEX, ESValue.POFILE_DOCTYPE, result.getId(), builder);
             } catch (IOException e) {
@@ -52,31 +61,18 @@ public class PersonController {
     }
 
     public List<Person> findNameLike(String name){
-        elasticsearchService.findNameLike("title", name, "andri", "news");
+        List<Person> persons = elasticsearchService.findNameLike("name", name, ESValue.PERSON_INDEX, ESValue.POFILE_DOCTYPE);
+        if(!persons.isEmpty()) return persons;
         return personDao.findName(name);
     }
 
-    public String config() {
-        // string config
-        Config root = config.getConfig("config");
-        String titleString1 = config.getConfig("config").getConfig("notification").getString("title");
-        String titleString2 = config.getString("config.notification.title");
-        String messageString1 = config.getString("config.notification.message");
-        LOGGER.info("root config {}", root);
-        LOGGER.info("string title {}", titleString1);
-        LOGGER.info("string title {}", titleString2);
-        LOGGER.info("string message {}", messageString1);
-
-        // json config
-        Config jsonRoot = config.getConfig("foo");
-        int jsonInt1 = config.getConfig("foo").getInt("bar");
-        int jsonInt2 = config.getInt("foo.bar");
-        int jsonInt3 = config.getInt("foo.baz");
-        LOGGER.info("root json {}", jsonRoot);
-        LOGGER.info("int json {}", jsonInt1);
-        LOGGER.info("int bar {}", jsonInt2);
-        LOGGER.info("int baz {}", jsonInt3);
-
-        return "OK";
+    protected void validatePerson(Person data) throws ValidationException {
+        Set<ConstraintViolation<Person>> violations = validator.validate(data);
+        for (ConstraintViolation<Person> violation : violations) {
+            if (!StringUtils.isEmpty(violation.getMessage())){
+                throw new ValidationException(violation.getMessage());
+            }
+        }
     }
+
 }

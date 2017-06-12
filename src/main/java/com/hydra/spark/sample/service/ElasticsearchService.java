@@ -1,6 +1,8 @@
 package com.hydra.spark.sample.service;
 
+import com.google.gson.Gson;
 import com.google.inject.Inject;
+import com.hydra.spark.sample.persistence.domain.Person;
 import org.elasticsearch.action.index.IndexResponse;
 import org.elasticsearch.action.search.SearchRequestBuilder;
 import org.elasticsearch.action.search.SearchResponse;
@@ -13,12 +15,18 @@ import org.elasticsearch.index.query.QueryBuilders;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.util.LinkedList;
+import java.util.List;
+
 public class ElasticsearchService {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(ElasticsearchService.class);
 
     @Inject
     Client client;
+
+    @Inject
+    Gson gson;
 
     public Integer addIndex(String index, String docType, Integer id, XContentBuilder builder){
         Integer resultId = null;
@@ -35,7 +43,7 @@ public class ElasticsearchService {
         return resultId;
     }
 
-    public void findNameLike(String field, String value, String indexName , String type) {
+    public List<Person> findNameLike(String field, String value, String indexName , String type) {
 
         QueryBuilder queryBuilder = QueryBuilders.matchQuery(field, value).fuzziness(Fuzziness.AUTO).operator(Operator.AND);
 
@@ -48,5 +56,17 @@ public class ElasticsearchService {
         SearchResponse response = requestBuilder.execute().actionGet();
 
         LOGGER.info("search response {}", response.toString());
+
+        return createPersonResponse(response);
+    }
+
+    private List<Person> createPersonResponse(SearchResponse response){
+        List<Person> persons = new LinkedList<>();
+        for(int i=0; i<response.getHits().getHits().length; i++){
+            String eachSource = response.getHits().getHits()[i].getSourceAsString();
+            Person person = gson.fromJson(eachSource, Person.class);
+            persons.add(person);
+        }
+        return persons;
     }
 }

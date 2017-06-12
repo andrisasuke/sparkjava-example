@@ -3,17 +3,21 @@ package com.hydra.spark.sample.persistence.domain;
 import javax.persistence.Column;
 import javax.persistence.Entity;
 import javax.persistence.Table;
+import javax.validation.constraints.NotNull;
 
 @Entity
 @Table(name = "person")
 public class Person extends Base {
 
+    @NotNull(message = "Name is required")
     @Column(name = "name", nullable = false)
     private String name;
 
+    @NotNull(message = "Address is required")
     @Column(name = "address")
     private String address;
 
+    @NotNull(message = "Phone is required")
     @Column(name = "phone", nullable = false, unique = true)
     private String phone;
 

@@ -26,7 +26,7 @@
             -->
             <property name="hibernate.connection.driver_class" value="org.postgresql.Driver" />
             <property name="hibernate.connection.username" value="andri" />
-            <property name="hibernate.connection.password" value="anadri" />
+            <property name="hibernate.connection.password" value="andri" />
             <property name="hibernate.connection.url" value="jdbc:postgresql://localhost/andri" />
 
             <property name="hibernate.connection.provider_class" value="org.hibernate.connection.C3P0ConnectionProvider" />
