@@ -1,4 +1,4 @@
-Sparkjava Example - sample CRUD application
+Sparkjava Playground - sample CRUD Rest API application
 
 ## Requirement :
 
@@ -17,6 +17,8 @@ Sparkjava Example - sample CRUD application
 
 ## How to run :
 
-1. ./gradlew build
-2. ./gradlew startServer
+1. `./gradlew build`
+2. `./gradlew startServer`
 3. curl to `http://localhost:4567/` for testing
+4. `./gradlew fatJar` to create standalone jar application (jar file will be in `build/libs/*-all-[version].jar`)
+5. `java -jar filename.jar` to run jar application

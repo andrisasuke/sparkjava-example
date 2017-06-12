@@ -14,6 +14,19 @@ repositories {
     mavenCentral()
 }
 
+
+task fatJar(type: Jar) {
+
+    manifest {
+        attributes 'Implementation-Title': 'sparkjava-playground',
+                'Implementation-Version': version,
+                'Main-Class': 'com.hydra.spark.sample.Main'
+    }
+
+    baseName = project.name + '-all'
+    from { configurations.compile.collect { it.isDirectory() ? it : zipTree(it) } }
+    with jar
+}
 task startServer(type: JavaExec){
     main = "com.hydra.spark.sample.Main"
     description = "Start server"
