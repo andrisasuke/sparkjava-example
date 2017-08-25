@@ -35,38 +35,42 @@ public class Main {
         // define your routes
         get("/", (req, res) -> "Hi there!");
 
-        get("/person/:id", (req, res) -> {
-            Integer id = Integer.parseInt(req.params(":id"));
-            Person p = personController.getById(id);
-            if(p != null) res.status(200); else res.status(404);
-            return "person find : "+ ( p != null ? p.getName() : "not_found" );
+        path("/person", () -> {
+
+                    get("/:id", (req, res) -> {
+                        Integer id = Integer.parseInt(req.params(":id"));
+                        Person p = personController.getById(id);
+                        if (p != null) res.status(200);
+                        else res.status(404);
+                        return "person find : " + (p != null ? p.getName() : "not_found");
+                    });
+
+                    get("/name/:name", (req, res) -> {
+                        String nameLike = req.params(":name");
+                        List<Person> persons = personController.findNameLike(nameLike);
+                        if (persons != null) {
+                            res.status(200);
+                            String json = JsonUtil.toJson(persons);
+                            return new OkResponse(200, "found " + persons.size() + " person with name :" + nameLike, json);
+                        } else {
+                            res.status(406);
+                            return new ErrorResponse(406, "failed new person name :" + nameLike + ", check your server logs..");
+                        }
+                    }, JsonUtil.json());
+
+                    put("/", (req, res) -> {
+                        Person personRequest = JsonUtil.GSON.fromJson(req.body(), Person.class);
+                        try {
+                            Person p = personController.add(personRequest);
+                            res.status(201);
+                            return new OkResponse(201, "added new person name : " + p.getName());
+                        } catch (ValidationException ve) {
+                            res.status(400);
+                            return new ErrorResponse(400, ve.getMessage());
+                        }
+
+                    }, JsonUtil.json());
         });
-
-        get("/person/name/:name", (req, res) -> {
-            String nameLike = req.params(":name");
-            List<Person> persons = personController.findNameLike(nameLike);
-            if(persons != null){
-                res.status(200);
-                String json = JsonUtil.toJson(persons);
-                return new OkResponse(200, "found "+persons.size()+" person with name :"+nameLike, json);
-            } else {
-                res.status(406);
-                return new ErrorResponse(406, "failed new person name :"+nameLike + ", check your server logs.." );
-            }
-        }, JsonUtil.json());
-
-        put("/person/", (req, res) -> {
-            Person personRequest = JsonUtil.GSON.fromJson(req.body(), Person.class);
-            try {
-                Person p = personController.add(personRequest);
-                res.status(201);
-                return new OkResponse(201, "added new person name : "+p.getName());
-            } catch (ValidationException ve){
-                res.status(400);
-                return new ErrorResponse(400, ve.getMessage() );
-            }
-
-        }, JsonUtil.json());
 
         // global exception handler
         exception(Exception.class, (e, req, res) -> {
