@@ -1,11 +1,8 @@
 package com.hydra.spark.sample.util;
 
-import java.lang.annotation.Retention;
-import java.lang.annotation.RetentionPolicy;
+public final class ESValue {
 
-@Retention(RetentionPolicy.SOURCE)
-public @interface ESValue {
+    public static final String PERSON_INDEX = "person";
+    public static final String POFILE_DOCTYPE = "profile";
 
-    String PERSON_INDEX = "person";
-    String POFILE_DOCTYPE = "profile";
 }

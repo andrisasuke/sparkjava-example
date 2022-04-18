@@ -9,62 +9,60 @@ import spark.utils.StringUtils;
 import javax.persistence.EntityManager;
 import javax.persistence.EntityTransaction;
 import javax.persistence.Query;
+
 import java.util.ArrayList;
 import java.util.List;
 
-public class PersonDao {
+public class PersonDao extends BaseDao<Person> {
 
-    private static final Logger LOGGER = LoggerFactory.getLogger(PersonDao.class);
+    private static final Logger logger = LoggerFactory.getLogger(PersonDao.class);
 
     @Inject
     EntityManager entityManager;
 
     public Person find(Integer id) {
-
-        final EntityManager em = entityManager;
-        try {
-            return em.find(Person.class, id);
-        } catch (RuntimeException e) {
-            LOGGER.error("failed to find person id {} :{}",id, e.getMessage());
-            return null;
-        }
+        return findById(Person.class, id);
     }
 
     public Person save(String name, String address, String phone) {
-        final EntityManager em = entityManager;
-        final EntityTransaction trx = em.getTransaction();
+        final EntityTransaction trx = entityManager.getTransaction();
 
         Person person = new Person(name, address, phone);
-
         try {
-
             trx.begin();
-            em.persist(person);
+            entityManager.persist(person);
             trx.commit();
             return person;
-
-        } catch (RuntimeException e) {
+        } catch (Exception e) {
             if (trx != null && trx.isActive()) {
                 trx.rollback();
             }
-            LOGGER.error("failed to persist person {} :{}",name, e.getMessage());
-            return null;
+            logger.error("failed to persist person {} :{}",name, e.getMessage());
+            throw new RuntimeException(e);
         }
     }
 
     public List<Person> findName(String name) {
         if(!StringUtils.isEmpty(name)){
             name = name + "%";
-        } else return new ArrayList<>();
-        final EntityManager em = entityManager;
+        } else {
+            return new ArrayList<>();
+        }
+
         try {
-            Query query = em.createQuery("SELECT p FROM Person p WHERE p.name LIKE :NAME");
+            Query query = entityManager.createQuery("SELECT p FROM Person p " +
+                    "WHERE LOWER(p.name) LIKE LOWER(:NAME)");
             query.setParameter("NAME", name);
             return (List<Person>) query.getResultList();
-        } catch (RuntimeException e) {
-            LOGGER.error("failed to find person name {} :{}",name, e.getMessage());
+        } catch (Exception e) {
+            logger.error("failed to find person name {} :{}",name, e.getMessage());
             return null;
         }
+    }
+
+    @Override
+    protected EntityManager entityManager() {
+        return this.entityManager;
     }
 
 }

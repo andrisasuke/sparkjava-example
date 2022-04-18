@@ -13,69 +13,85 @@ import org.slf4j.LoggerFactory;
 import spark.Filter;
 
 import javax.validation.ValidationException;
-import java.util.*;
+import java.util.Collections;
+import java.util.Date;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 
-import static spark.Spark.*;
+import static spark.Spark.after;
+import static spark.Spark.exception;
+import static spark.Spark.get;
+import static spark.Spark.path;
+import static spark.Spark.port;
+import static spark.Spark.post;
 
 public class Main {
 
-    static final Logger LOGGER = LoggerFactory.getLogger(Main.class);
+    private static final Logger logger = LoggerFactory.getLogger(Main.class);
 
     public static void main(String[] args)  {
 
-        LOGGER.info("Starting Main server at {}", new Date().toString());
+        logger.info("Starting Main server at {}", new Date().toString());
 
         // inject all controllers
         Injector injector = Guice.createInjector(new AppModule());
         PersonController personController = injector.getInstance(PersonController.class);
         Config config = injector.getInstance(Config.class);
 
-        LOGGER.info("Sample to reading config by key {} : {}", "environment", config.getConfig("config").getString("environment"));
+        // Sample to reading config by key
+        port(config.getConfig("config").getInt("port"));
 
         // define your routes
         get("/", (req, res) -> "Hi there!");
 
         path("/person", () -> {
 
-                    get("/:id", (req, res) -> {
-                        Integer id = Integer.parseInt(req.params(":id"));
-                        Person p = personController.getById(id);
-                        if (p != null) res.status(200);
-                        else res.status(404);
-                        return "person find : " + (p != null ? p.getName() : "not_found");
-                    });
+            // find by param id
+            get("/id/:id", (req, res) -> {
+                Integer id = Integer.parseInt(req.params(":id"));
+                Person p = personController.getById(id);
+                if (p != null) {
+                    res.status(200);
+                } else {
+                    res.status(404);
+                }
+                return "person find : " + (p != null ? p.getName() : "not_found");
+            });
 
-                    get("/name/:name", (req, res) -> {
-                        String nameLike = req.params(":name");
-                        List<Person> persons = personController.findNameLike(nameLike);
-                        if (persons != null) {
-                            res.status(200);
-                            String json = JsonUtil.toJson(persons);
-                            return new OkResponse(200, "found " + persons.size() + " person with name :" + nameLike, json);
-                        } else {
-                            res.status(406);
-                            return new ErrorResponse(406, "failed new person name :" + nameLike + ", check your server logs..");
-                        }
-                    }, JsonUtil.json());
+            // find by query parameter
+            get("/name", (req, res) -> {
+                String nameLike = req.queryParams("q");
+                List<Person> persons = personController.findNameLike(nameLike);
+                if (persons != null) {
+                    res.status(200);
+                    return new OkResponse<List<Person>>(200,
+                            "found " + persons.size() + " person with name :" + nameLike,
+                            persons);
+                } else {
+                    res.status(406);
+                    return new ErrorResponse(406, "failed new person name :" + nameLike + ", check your server logs..");
+                }
+            }, JsonUtil.json());
 
-                    put("/", (req, res) -> {
-                        Person personRequest = JsonUtil.GSON.fromJson(req.body(), Person.class);
-                        try {
-                            Person p = personController.add(personRequest);
-                            res.status(201);
-                            return new OkResponse(201, "added new person name : " + p.getName());
-                        } catch (ValidationException ve) {
-                            res.status(400);
-                            return new ErrorResponse(400, ve.getMessage());
-                        }
+            post("/", (req, res) -> {
+                Person personRequest = JsonUtil.fromJson(req.body(), Person.class);
+                try {
+                    Person p = personController.add(personRequest);
+                    res.status(201);
+                    return new OkResponse<String>(201,
+                            String.format("added new person Id: %d, Name : %s", p.getId(), p.getName()));
+                } catch (ValidationException ve) {
+                    res.status(400);
+                    return new ErrorResponse(400, ve.getMessage());
+                }
 
-                    }, JsonUtil.json());
+            }, JsonUtil.json());
         });
 
         // global exception handler
         exception(Exception.class, (e, req, res) -> {
-            LOGGER.error(String.format("%s : Got an exception for request : %s  ", e.getLocalizedMessage(), req.url()));
-            LOGGER.error(e.getLocalizedMessage(), e);
+            logger.error("{} : Got an exception for request : {}  ", e.getLocalizedMessage(), req.url());
             res.status(500);
             res.body(JsonUtil.toJson(new ErrorResponse(500, "Internal Server Error")));
         });
@@ -93,7 +109,6 @@ public class Main {
             corsHeaders.forEach(response::header);
         };
         after(corsFilter);
-
     }
 
 }

@@ -1,0 +1,16 @@
+POST http://localhost:4567/person/ HTTP/1.1
+content-type: application/json
+
+{
+    "name": "one",
+    "address": "JK",
+    "phone": "51"
+}
+
+###
+
+GET http://localhost:4567/person/id/1 HTTP/1.1
+
+###
+
+GET http://localhost:4567/person/name?q=one HTTP/1.1

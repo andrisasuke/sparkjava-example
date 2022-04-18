@@ -12,11 +12,10 @@ import com.hydra.spark.sample.persistence.dao.PersonDao;
 import com.hydra.spark.sample.service.ElasticsearchService;
 import com.typesafe.config.Config;
 import com.typesafe.config.ConfigFactory;
-import org.elasticsearch.client.Client;
-import org.elasticsearch.client.transport.TransportClient;
-import org.elasticsearch.common.settings.Settings;
-import org.elasticsearch.common.transport.InetSocketTransportAddress;
-import org.elasticsearch.transport.client.PreBuiltTransportClient;
+import org.apache.http.HttpHost;
+import org.elasticsearch.client.RequestOptions;
+import org.elasticsearch.client.RestClient;
+import org.elasticsearch.client.RestHighLevelClient;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -26,12 +25,11 @@ import javax.persistence.Persistence;
 import javax.validation.Validation;
 import javax.validation.Validator;
 import javax.validation.ValidatorFactory;
-import java.net.InetAddress;
-import java.net.UnknownHostException;
+import java.io.IOException;
 
 public class AppModule implements Module {
 
-    private static final Logger LOGGER = LoggerFactory.getLogger(AppModule.class);
+    private static final Logger logger = LoggerFactory.getLogger(AppModule.class);
 
     @Override
     public void configure(Binder binder) {
@@ -39,6 +37,12 @@ public class AppModule implements Module {
         binder.bind(PersonDao.class).asEagerSingleton();
         binder.bind(PersonController.class).asEagerSingleton();
         binder.bind(ElasticsearchService.class).asEagerSingleton();
+    }
+
+    @Singleton
+    @Provides
+    public Config providesConfigFactory() {
+        return ConfigFactory.load("application");
     }
 
     @Singleton
@@ -52,7 +56,7 @@ public class AppModule implements Module {
     @Singleton
     @Provides
     public EntityManager providesEntityManager() {
-        LOGGER.info("Initialize entity manager from persistence");
+        logger.info("Initialize entity manager from persistence");
         EntityManagerFactory emf = Persistence.createEntityManagerFactory("default");
         EntityManager em = emf.createEntityManager();
         return em;
@@ -60,22 +64,19 @@ public class AppModule implements Module {
 
     @Singleton
     @Provides
-    public Config providesConfigFactory(){
-        return ConfigFactory.load("application");
-    }
-
-    @Singleton
-    @Provides
-    public Client provideElasticSearchClient(){
+    public RestHighLevelClient elasticClient(Config config) {
+        RestHighLevelClient client = new RestHighLevelClient(
+                RestClient.builder(new HttpHost(
+                        config.getConfig("elasticsearch").getString("host"),
+                        config.getConfig("elasticsearch").getInt("port"),
+                        "http")));
         try {
-            TransportClient client = new PreBuiltTransportClient(Settings.EMPTY)
-                    .addTransportAddress(new InetSocketTransportAddress(InetAddress.getByName("localhost"), 9300));
-            LOGGER.info("ES transport client is created {}", client);
-            return client;
-        }catch (UnknownHostException e){
-            LOGGER.error("Failed to create ES transport client, {}", e.getMessage());
+            boolean ping = client.ping(RequestOptions.DEFAULT);
+            logger.info("ping connection to elasticsearch: {}", ping);
+        } catch (IOException e) {
+            throw new RuntimeException(e);
         }
-        return null;
+        return client;
     }
 
     @Singleton

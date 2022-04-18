@@ -1,12 +1,12 @@
 package com.hydra.spark.sample.model;
 
-public class OkResponse {
+public class OkResponse<T> {
 
     private int status;
 
     private String message;
 
-    private String data;
+    private T data;
 
     public OkResponse(){}
 
@@ -15,7 +15,7 @@ public class OkResponse {
         this.message = message;
     }
 
-    public OkResponse(int status, String message, String data) {
+    public OkResponse(int status, String message, T data) {
         this.status = status;
         this.message = message;
         this.data = data;
@@ -37,11 +37,11 @@ public class OkResponse {
         return message;
     }
 
-    public String getData() {
+    public T getData() {
         return data;
     }
 
-    public void setData(String data) {
+    public void setData(T data) {
         this.data = data;
     }
 }

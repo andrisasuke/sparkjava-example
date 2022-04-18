@@ -20,3 +20,4 @@ build
 *.log
 *.rdb
 .idea/
+.vscode
